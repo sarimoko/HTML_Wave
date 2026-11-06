@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#111713">
+<meta name="description" content="WAVE LAB — browser-based audio oscilloscope and research instrument.">
+<title>WAVE LAB | Waveform Analysis & Visualization Environment</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="chassis">
+<header class="top">
+  <div class="identity"><div class="logo">W</div><div><h1>WAVE <span>LAB</span></h1><p>WAVEFORM ANALYSIS &amp; VISUALIZATION ENVIRONMENT</p></div></div>
+  <div class="state"><i id="led"></i><b id="status">STANDBY</b><span>RESEARCH INSTRUMENT · REV 1.0</span></div>
+</header>
+<nav class="tabs">
+  <button class="tab selected" data-tab="scope">01 / OSCILLOSCOPE</button>
+  <button class="tab" data-tab="spectrum">02 / SPECTRUM</button>
+  <button class="tab" data-tab="measure">03 / MEASUREMENTS</button>
+  <button class="tab" data-tab="notebook">04 / NOTEBOOK</button>
+</nav>
+<main>
+<section class="page shown" id="scope">
+  <div class="heading"><div><small>TIME DOMAIN · CHANNEL 1</small><h2>Oscilloscope</h2><p>Audio waveform acquisition and inspection</p></div><div class="readouts"><div><small>PEAK LEVEL</small><strong id="peakDb">— dBFS</strong></div><div><small>RMS LEVEL</small><strong id="rmsDb">— dBFS</strong></div><div><small>DOMINANT FREQUENCY</small><strong id="frequency">— Hz</strong></div></div></div>
+  <div class="display"><div class="display-head"><span><i class="dot"></i> CH1 · LIVE TRACE</span><span id="displayState">WAITING FOR ACQUISITION</span><span id="sr">SR —</span></div><canvas id="wave" aria-label="Audio waveform display"></canvas><div class="display-foot"><span>TIMEBASE <b id="timeLabel">5 ms/div</b></span><span>VERTICAL <b id="scaleLabel">0.25 FS/div</b></span><span>TRIGGER <b>AUTO</b></span></div></div>
+  <div class="controls">
+    <article class="panel"><header>ACQUISITION <em>01</em></header><div class="buttons"><button class="go" id="start">▶ START</button><button id="hold" disabled>Ⅱ HOLD</button></div>
+      <label>INPUT SOURCE<select id="source"><option value="generator">Internal signal generator</option><option value="mic">Microphone input</option></select></label>
+      <label>LOAD AUDIO FILE<input id="file" type="file" accept="audio/*"></label><p class="hint">Microphone access requires HTTPS or localhost. Audio is processed locally in your browser.</p>
+    </article>
+    <article class="panel"><header>HORIZONTAL / TIMEBASE <em>02</em></header>
+      <label>TIME PER DIVISION <output id="timeOut">5 ms</output><input id="time" type="range" min="0" max="5" value="3"></label>
+      <label>TRIGGER LEVEL <output id="triggerOut">0.00</output><input id="trigger" type="range" min="-1" max="1" step=".01" value="0"></label>
+      <label class="check"><input id="triggerEnabled" type="checkbox" checked> Rising-edge trigger</label>
+    </article>
+    <article class="panel"><header>VERTICAL / CHANNEL 1 <em>03</em></header>
+      <label>AMPLITUDE SCALE <output id="scaleOut">0.25 FS/div</output><input id="scale" type="range" min="0" max="4" value="2"></label>
+      <label>VERTICAL POSITION <output id="positionOut">0.00</output><input id="position" type="range" min="-1" max="1" step=".01" value="0"></label>
+    </article>
+    <article class="panel"><header>FUNCTION GENERATOR <em>04</em></header>
+      <label>WAVEFORM<select id="waveType"><option value="sine">Sine</option><option value="square">Square</option><option value="sawtooth">Sawtooth</option><option value="triangle">Triangle</option></select></label>
+      <div class="split"><label>FREQUENCY · Hz<input id="genHz" type="number" min="1" max="20000" value="440"></label><label>GAIN · 0–1<input id="genGain" type="number" min="0" max="1" step=".01" value=".35"></label></div>
+      <button id="apply">APPLY SETTINGS</button>
+    </article>
+  </div>
+</section>
+<section class="page" id="spectrum">
+  <div class="heading"><div><small>FREQUENCY DOMAIN · FFT</small><h2>Spectrum analyzer</h2><p>Magnitude spectrum from the active audio stream</p></div><div class="readouts"><div><small>DOMINANT PEAK</small><strong id="peakHz">— Hz</strong></div><div><small>FFT SIZE</small><strong id="fftReadout">8192</strong></div></div></div>
+  <div class="display"><div class="display-head"><span><i class="dot amber"></i> MAGNITUDE SPECTRUM</span><span>LOG FREQUENCY AXIS</span><span>0 — NYQUIST</span></div><canvas id="fft"></canvas><div class="display-foot"><span>FREQUENCY <b>LOGARITHMIC</b></span><span>MAGNITUDE <b>RELATIVE</b></span><span>WINDOW <b>BROWSER FFT</b></span></div></div>
+  <div class="controls two">
+    <article class="panel"><header>FFT CONFIGURATION <em>05</em></header><label>FFT SIZE<select id="fftSize"><option>2048</option><option>4096</option><option selected>8192</option><option>16384</option><option>32768</option></select></label><p class="hint">Larger FFT sizes improve frequency-bin spacing but require more samples and may respond more slowly.</p></article>
+    <article class="panel"><header>SPECTRAL REFERENCE <em>06</em></header><div class="datum"><span>Sample rate</span><b id="sampleRate">—</b></div><div class="datum"><span>Bin spacing</span><b id="binSpacing">—</b></div><div class="datum"><span>Nyquist frequency</span><b id="nyquist">—</b></div></article>
+  </div>
+</section>
+<section class="page" id="measure">
+  <div class="heading"><div><small>SIGNAL CHARACTERIZATION</small><h2>Measurements</h2><p>Estimates derived from the current time-domain buffer</p></div><span class="caution">UN-CALIBRATED DIGITAL INPUT</span></div>
+  <div class="metrics">
+    <div><small>PEAK AMPLITUDE</small><strong id="mPeak">—</strong><span>normalized FS</span></div><div><small>PEAK-TO-PEAK</small><strong id="mP2P">—</strong><span>normalized FS</span></div><div><small>RMS AMPLITUDE</small><strong id="mRms">—</strong><span>normalized FS</span></div><div><small>RMS LEVEL</small><strong id="mDb">—</strong><span>dBFS</span></div><div><small>CREST FACTOR</small><strong id="mCrest">—</strong><span>peak / RMS</span></div><div><small>ZERO-CROSSING EST.</small><strong id="mZero">—</strong><span>approximate Hz</span></div>
+  </div>
+  <article class="panel methods"><header>METHOD NOTES &amp; DEFINITIONS <em>07</em></header>
+    <dl><dt>dBFS</dt><dd>Decibels relative to digital full scale. 0 dBFS represents maximum representable digital amplitude.</dd>
+    <dt>RMS</dt><dd>Root mean square amplitude, calculated from the sampled buffer.</dd>
+    <dt>Crest factor</dt><dd>Peak amplitude divided by RMS amplitude.</dd>
+    <dt>Zero-crossing estimate</dt><dd>A rough estimate from positive-going zero crossings. Most useful for clean single tones; not a substitute for spectral analysis.</dd>
+    <dt>Calibration</dt><dd>Amplitude is normalized digital sample level, not calibrated volts or sound-pressure level. Microphone sensitivity and system gain are unknown.</dd></dl>
+    <button id="csv">EXPORT MEASUREMENTS · CSV</button>
+  </article>
+</section>
+<section class="page" id="notebook">
+  <div class="heading"><div><small>EXPERIMENT LOG · LOCAL STORAGE</small><h2>Research notebook</h2><p>Document observations and capture measurement snapshots</p></div><span class="caution">STORED ON THIS DEVICE</span></div>
+  <div class="notebook">
+    <article class="panel"><header>NEW EXPERIMENT ENTRY <em>08</em></header><label>EXPERIMENT TITLE<input id="noteTitle" placeholder="e.g. 440 Hz reference tone"></label><label>OBSERVATIONS<textarea id="noteBody" rows="6" placeholder="Describe signal, setup, conditions, and observations…"></textarea></label><button class="go" id="saveNote">SAVE ENTRY + SNAPSHOT</button><button id="exportNotes">EXPORT NOTEBOOK JSON</button><p class="hint">Entries remain in this browser. Export JSON to retain a portable backup.</p></article>
+    <article class="panel"><header>EXPERIMENT LOG <em id="count">0 ENTRIES</em></header><div id="entries"><p class="hint">No experiment entries yet.</p></div></article>
+  </div>
+</section>
+</main>
+<footer><span>WAVE LAB · RESEARCH INSTRUMENT SIMULATOR</span><span>LOCAL PROCESSING · NO AUDIO UPLOAD</span><span>BUILD 001</span></footer>
+</div>
+<script src="app.js"></script>
+</body></html>
